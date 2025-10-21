@@ -1,0 +1,2 @@
+# Ultimate-Secure-WordPress-.htaccess-Advanced-Firewall-Anti-Hack-Protection
+A highly optimized .htaccess configuration that transforms your WordPress site into a fortress 🧱. Includes advanced firewall rules, brute-force protection, SQL/XSS filter, bot blocking, hotlink prevention, secure HTTP headers, file-type restrictions, and IP-based access control while keeping WordPress, Rank Math SEO, and wp-cron fully functional.
