@@ -1,0 +1,161 @@
+# =========================================
+# 🔐 Ultimate Secure WordPress .htaccess
+# Repository: SecureWP Defense Suite
+# Author: Imran Ahmed
+# =========================================
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+
+# Preserve Authorization Header for APIs
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# =======================
+# ✅ Basic WordPress Rules
+# =======================
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# =======================
+# 🚫 Security Protections
+# =======================
+
+# Block access to sensitive files
+<FilesMatch "(^\.|wp-config\.php|php.ini|php5.ini|readme\.html|license\.txt|composer\.json|composer\.lock)">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+# Protect .htaccess itself
+<Files .htaccess>
+  Order Allow,Deny
+  Deny from all
+</Files>
+
+# =======================
+# ⚙️ Restrict Access by IP
+# =======================
+<Files wp-login.php>
+  Order Deny,Allow
+  Deny from all
+  Allow from YOUR_LOGIN_IP
+</Files>
+
+<Files wp-cron.php>
+  Order Deny,Allow
+  Deny from all
+  Allow from YOUR_SERVER_IP
+</Files>
+
+# =======================
+# 🧱 Query String & Injection Protection
+# =======================
+<IfModule mod_rewrite.c>
+RewriteCond %{QUERY_STRING} (\.\./|\:|%0A|%0D|%27|%22|%3C|%3E|%00|%2e%2e%2f) [NC,OR]
+RewriteCond %{QUERY_STRING} (base64_encode|eval\(|UNION|SELECT|INSERT|CAST|SET|DECLARE) [NC]
+RewriteRule .* - [F,L]
+
+# Block suspicious query strings
+RewriteCond %{QUERY_STRING} (cmd|bash|curl|wget|python|eval|base64|system|shell|cat|passwd|chmod|chown|scp|git|bin|wp\-|env|upload|config|core|log|cache) [NC]
+RewriteRule .* - [F,L]
+</IfModule>
+
+# =======================
+# 🚫 Restrict File Types in Uploads
+# =======================
+<IfModule mod_rewrite.c>
+RewriteCond %{REQUEST_URI} ^/wp-content/uploads/ [NC]
+RewriteCond %{REQUEST_URI} !\.(jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|zip|rar)$ [NC]
+RewriteRule .* - [F,L]
+</IfModule>
+
+# =======================
+# 🧩 Disable PHP Execution in Uploads
+# =======================
+<Directory "/wp-content/uploads">
+  <FilesMatch "\.(php|phtml|php5|phar|sh|exe)$">
+    Deny from all
+  </FilesMatch>
+</Directory>
+
+# =======================
+# 🕷️ Block XMLRPC
+# =======================
+<Files xmlrpc.php>
+  Order Allow,Deny
+  Deny from all
+</Files>
+
+# =======================
+# 🧠 Restrict Dangerous HTTP Methods
+# =======================
+RewriteCond %{REQUEST_METHOD} ^(PUT|DELETE|TRACE|CONNECT) [NC]
+RewriteRule .* - [F,L]
+
+# Allow POST, PUT, DELETE only for wp-admin, cron, Rank Math APIs, and login
+<IfModule mod_rewrite.c>
+RewriteCond %{REQUEST_METHOD} ^(PUT|POST|DELETE|OPTIONS) [NC]
+RewriteCond %{REQUEST_URI} !^/wp-admin/ [NC]
+RewriteCond %{REQUEST_URI} !^/wp-cron\.php$ [NC]
+RewriteCond %{REQUEST_URI} !^/wp-json/rankmath/v1/ [NC]
+RewriteCond %{REQUEST_URI} !^/wp-login\.php$ [NC]
+RewriteCond %{HTTP_COOKIE} !wordpress_logged_in [NC]
+RewriteRule .* - [F,L]
+</IfModule>
+
+# =======================
+# 🌐 Disable Directory Browsing
+# =======================
+Options -Indexes
+
+# =======================
+# 🛡️ Prevent Hotlinking
+# =======================
+<IfModule mod_rewrite.c>
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^https://(www\.)?YOURDOMAIN\.com/ [NC]
+RewriteRule \.(jpg|jpeg|png|gif|mp4|webp)$ - [F,L]
+</IfModule>
+
+# =======================
+# 📦 MIME-Type Restrictions
+# =======================
+AddType application/javascript .js
+AddType text/css .css
+AddType application/json .json
+AddType image/webp .webp
+
+# =======================
+# 🔏 Secure HTTP Headers
+# =======================
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+</IfModule>
+
+# =======================
+# 🚨 404 Stealth Mode
+# =======================
+ErrorDocument 403 /?page_id=404
+ErrorDocument 404 /?page_id=404
+ErrorDocument 500 /?page_id=404
+
+# =======================
+# 🪲 Bot Protection (Optional)
+# =======================
+<IfModule mod_rewrite.c>
+RewriteCond %{HTTP_USER_AGENT} (python|curl|wget|nikto|libwww|scan|sqlmap|fuzzer|masscan|httpclient|nmap|dirbuster) [NC]
+RewriteRule .* - [F,L]
+</IfModule>
+
+# =======================
+# ✅ End of SecureWP Rules
+# =======================
